@@ -1,0 +1,161 @@
+---
+title: "COMPSCIX 415.2 Homework 2"
+author: "Yukio Rattai"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load_packages, warning=FALSE, message=FALSE}
+library(mdsr)
+library(tidyverse)
+```
+
+# 3.2.4
+
+### 1. Run ggplot(data = mpg) . What do you see?
+```{r}
+ggplot(data = mpg)
+```
+
+### 2. How many rows are in mpg ? How many columns?
+```{r}
+cat("ROWS:", NROW(mpg))
+cat("COLUMNS:", NCOL(mpg))
+```
+
+### 3. What does the drv variable describe? Read the help for ?mpg to find out.
+#### drv variable describe the drive of the vehicle: "f = front-wheel drive, r = rear wheel drive, 4 = 4wd"
+
+### 4. Make a scatterplot of hwy vs cyl .
+```{r}
+ggplot(data = mpg) +
+geom_point(mapping = aes(x = cyl, y = hwy))
+```
+
+### 5. What happens if you make a scatterplot of class vs drv ? Why is the plot not useful?
+```{r}
+ggplot(data = mpg) +
+geom_point(mapping = aes(x = class, y = drv))
+```
+#### This plot has limted use because it only tells us if there is an instance of each type of drive train in each class. We do not see a count or percentage of drive trains per class, only a plot if it exists in the data set. Perhaps it would be more useful to create a plot that vidualizes the percentage of total drive trains per class.
+
+# 3.3.1
+
+### 1. What’s gone wrong with this code? Why are the points not blue?
+```{r}
+ggplot(data = mpg) +
+geom_point(mapping = aes(x = displ, y = hwy, color = "blue"))
+```
+#### The color argument should be passed to the geom_point function, not the call to aes, thr proper syntax should be:
+```{r}
+ggplot(data = mpg) +
+geom_point(mapping = aes(x = displ, y = hwy), color = "blue")
+```
+
+### 2. Which variables in mpg are categorical? Which variables are continuous? (Hint: type ?mpg to read the documentation for the dataset). How can you see this information when you run mpg ?
+```{r}
+mpg
+```
+#### One can see the variable types of the dataset above. In most cases Integer and Double variable types are continuous, where the Character data types are categorical
+
+manufacturer (categorical)  <br />
+model model name (categorical) <br />
+displ engine displacement, in litres (continuous) <br />
+year year of manufacture (continuous) <br />
+cyl number of cylinders (continuous) <br />
+trans type of transmission (categorical) <br />
+drv f = front-wheel drive, r = rear wheel drive, 4 = 4wd (categorical) <br />
+cty city miles per gallon (continuous) <br />
+hwy highway miles per gallon (continuous) <br />
+fl fuel type (categorical) <br />
+class "type" of car (categorical) <br />
+
+### 3. Map a continuous variable to color , size , and shape . How do these aesthetics behave differently for categorical vs. continuous variables?
+
+#### all categorical
+```{r}
+ggplot(data = mpg) +
+geom_point(mapping = aes(x = manufacturer, y = model, color=drv, shape=trans))
+```
+
+#### all continuous
+```{r}
+ggplot(data = mpg) +
+geom_point(mapping = aes(x = displ, y = hwy, color=cty))
+```
+
+* With continuous plots it seems that the distribution are more spread out, they do not all fall on a few points like categorical data.
+* With continuous plots the colors treat each number as if it were a category
+* Continuous variables can not be used with shapes, an error is thrown: "Error: A continuous variable can not be mapped to shape"
+
+### 6. What happens if you map an aesthetic to something other than a variable name, like aes(colour = displ < 5)
+
+```{r}
+ggplot(data = mpg) +
+geom_point(mapping = aes(x = displ, y = hwy, color=displ < 5))
+```
+
+#### In this case, it executes the color argument to return a boolean. All points that have a displ of less than 5 will be one color, while those that are greater will be a different color
+
+# 3.5.1
+
+### 4. Take the first faceted plot in this section:
+```{r}
+ggplot(data = mpg) +
+geom_point(mapping = aes(x = displ, y = hwy)) + facet_wrap(~ class, nrow = 2)
+```
+#### This is helpful to see all of the different classes side by side. In a larger dataset, it may be hard to see all of the different colors when they are plotted on the same graph. Although it may get harder to compare if you are using the facet_wrap with a variable that has many types.
+
+### 5. Read ?facet_wrap . What does nrow do? What does ncol do? What other options control the layout of the individual panels? Why doesn’t facet_grid() have nrow and ncol argument?
+#### facet_wrap creates a 2d sequence of panels, where face_grid does not. This means that cols and rows are not aplicable
+
+### 1. What geom would you use to draw a line chart? A boxplot? A histogram? An area chart?
+```{r}
+ggplot(data = mpg) +
+geom_boxplot(mapping = aes(x = displ, y = hwy, group=displ))
+
+ggplot(data = mpg) +
+geom_line(mapping = aes(x = displ, y = hwy))
+
+ggplot(data = mpg) +
+geom_area(mapping = aes(x = displ, y = hwy))
+
+ggplot(mpg) +
+geom_histogram(mapping = aes(x = class, y = hwy), stat = "identity")
+```
+
+### 2. Run this code in your head and predict what the output will look like. Then, run the code in R and check your predictions.
+
+#### I believe this will plot a graph with points and a smooth line graph. Accoriding to the documentation, the "se" argument determines whether to display the confidence interval. So I predict this will not be displayed on this graph. Only the line will appear.
+
+```{r}
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy, color = drv)) + geom_point() +
+geom_smooth(se = FALSE)
+```
+
+### 3. What does show.legend = FALSE do? What happens if you remove it? Why do you think I used it earlier in the chapter?
+
+#### show.lengend = FALSE will prevent the graph from showing a legend. In the previous examples, the x and y axis were labeled appropriately, a legend would have provided no additional information.
+
+### 4. What does the se argument to geom_smooth() do?
+#### The documentation states: "se: display confidence interval around smooth? (TRUE by default, see level to control"
+
+### 5. Will these two graphs look different? Why/why not?
+```{r}
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + geom_point() +
+geom_smooth()
+
+ggplot() +
+geom_point(data = mpg, mapping = aes(x = displ, y = hwy)) + geom_smooth(data = mpg, mapping = aes(x = displ, y = hwy))
+```
+
+#### These graphs are the same, they just use different syntax to achieve the same results
+
+# 3.7.1
+
+### 2. What does geom_col() do? How is it different to geom_bar() ?
+
+#### per the description in the documentation: "There are two types of bar charts: ‘geom_bar’ makes the height of the bar proportional to the number of cases in each group (or if the ‘weight’ aethetic is supplied, the sum of the weights). If you want the heights of the bars to represent values in the data, use geom_col instead. ‘geom_bar’ uses ‘stat_count’ by default: it counts the number of cases at each x position. ‘geom_col’ uses ‘stat_identity’: it leaves the data as is."
