@@ -1,0 +1,304 @@
+---
+title: "COMPSCIX 415.2 Homework 3"
+author: "Yukio Rattai"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load_packages, warning=FALSE, message=FALSE}
+library(mdsr)
+library(tidyverse)
+library(nycflights13)
+```
+
+# 3.2.4
+
+### 1. Run ggplot(data = mpg) . What do you see?
+```{r}
+ggplot(data = mpg)
+```
+
+### 2. How many rows are in mpg ? How many columns?
+```{r}
+cat("ROWS:", NROW(mpg))
+cat("COLUMNS:", NCOL(mpg))
+```
+
+### 3. What does the drv variable describe? Read the help for ?mpg to find out.
+#### drv variable describe the drive of the vehicle: "f = front-wheel drive, r = rear wheel drive, 4 = 4wd"
+
+### 4. Make a scatterplot of hwy vs cyl .
+```{r}
+ggplot(data = mpg) +
+geom_point(mapping = aes(x = cyl, y = hwy))
+```
+
+### 5. What happens if you make a scatterplot of class vs drv ? Why is the plot not useful?
+```{r}
+ggplot(data = mpg) +
+geom_point(mapping = aes(x = class, y = drv))
+```
+#### This plot has limted use because it only tells us if there is an instance of each type of drive train in each class. We do not see a count or percentage of drive trains per class, only a plot if it exists in the data set. Perhaps it would be more useful to create a plot that vidualizes the percentage of total drive trains per class.
+
+# 3.3.1
+
+### 1. What’s gone wrong with this code? Why are the points not blue?
+```{r}
+ggplot(data = mpg) +
+geom_point(mapping = aes(x = displ, y = hwy, color = "blue"))
+```
+#### The color argument should be passed to the geom_point function, not the call to aes, thr proper syntax should be:
+```{r}
+ggplot(data = mpg) +
+geom_point(mapping = aes(x = displ, y = hwy), color = "blue")
+```
+
+### 2. Which variables in mpg are categorical? Which variables are continuous? (Hint: type ?mpg to read the documentation for the dataset). How can you see this information when you run mpg ?
+```{r}
+mpg
+```
+#### One can see the variable types of the dataset above. In most cases Integer and Double variable types are continuous, where the Character data types are categorical
+
+manufacturer (categorical)  <br />
+model model name (categorical) <br />
+displ engine displacement, in litres (continuous) <br />
+year year of manufacture (continuous) <br />
+cyl number of cylinders (continuous) <br />
+trans type of transmission (categorical) <br />
+drv f = front-wheel drive, r = rear wheel drive, 4 = 4wd (categorical) <br />
+cty city miles per gallon (continuous) <br />
+hwy highway miles per gallon (continuous) <br />
+fl fuel type (categorical) <br />
+class "type" of car (categorical) <br />
+
+### 3. Map a continuous variable to color , size , and shape . How do these aesthetics behave differently for categorical vs. continuous variables?
+
+#### all categorical
+```{r}
+ggplot(data = mpg) +
+geom_point(mapping = aes(x = manufacturer, y = model, color=drv, shape=trans))
+```
+
+#### all continuous
+```{r}
+ggplot(data = mpg) +
+geom_point(mapping = aes(x = displ, y = hwy, color=cty))
+```
+
+* With continuous plots it seems that the distribution are more spread out, they do not all fall on a few points like categorical data.
+* With continuous plots the colors treat each number as if it were a category
+* Continuous variables can not be used with shapes, an error is thrown: "Error: A continuous variable can not be mapped to shape"
+
+### 6. What happens if you map an aesthetic to something other than a variable name, like aes(colour = displ < 5)
+
+```{r}
+ggplot(data = mpg) +
+geom_point(mapping = aes(x = displ, y = hwy, color=displ < 5))
+```
+
+#### In this case, it executes the color argument to return a boolean. All points that have a displ of less than 5 will be one color, while those that are greater will be a different color
+
+# 3.5.1
+
+### 4. Take the first faceted plot in this section:
+```{r}
+ggplot(data = mpg) +
+geom_point(mapping = aes(x = displ, y = hwy)) + facet_wrap(~ class, nrow = 2)
+```
+#### This is helpful to see all of the different classes side by side. In a larger dataset, it may be hard to see all of the different colors when they are plotted on the same graph. Although it may get harder to compare if you are using the facet_wrap with a variable that has many types.
+
+### 5. Read ?facet_wrap . What does nrow do? What does ncol do? What other options control the layout of the individual panels? Why doesn’t facet_grid() have nrow and ncol argument?
+#### facet_wrap creates a 2d sequence of panels, where face_grid does not. This means that cols and rows are not aplicable
+
+### 1. What geom would you use to draw a line chart? A boxplot? A histogram? An area chart?
+```{r}
+ggplot(data = mpg) +
+geom_boxplot(mapping = aes(x = displ, y = hwy, group=displ))
+
+ggplot(data = mpg) +
+geom_line(mapping = aes(x = displ, y = hwy))
+
+ggplot(data = mpg) +
+geom_area(mapping = aes(x = displ, y = hwy))
+
+ggplot(mpg) +
+geom_histogram(mapping = aes(x = class, y = hwy), stat = "identity")
+```
+
+### 2. Run this code in your head and predict what the output will look like. Then, run the code in R and check your predictions.
+
+#### I believe this will plot a graph with points and a smooth line graph. Accoriding to the documentation, the "se" argument determines whether to display the confidence interval. So I predict this will not be displayed on this graph. Only the line will appear.
+
+```{r}
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy, color = drv)) + geom_point() +
+geom_smooth(se = FALSE)
+```
+
+### 3. What does show.legend = FALSE do? What happens if you remove it? Why do you think I used it earlier in the chapter?
+
+#### show.lengend = FALSE will prevent the graph from showing a legend. In the previous examples, the x and y axis were labeled appropriately, a legend would have provided no additional information.
+
+### 4. What does the se argument to geom_smooth() do?
+#### The documentation states: "se: display confidence interval around smooth? (TRUE by default, see level to control"
+
+### 5. Will these two graphs look different? Why/why not?
+```{r}
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + geom_point() +
+geom_smooth()
+
+ggplot() +
+geom_point(data = mpg, mapping = aes(x = displ, y = hwy)) + geom_smooth(data = mpg, mapping = aes(x = displ, y = hwy))
+```
+
+#### These graphs are the same, they just use different syntax to achieve the same results
+
+# 3.7.1
+
+### 2. What does geom_col() do? How is it different to geom_bar() ?
+
+#### per the description in the documentation: "There are two types of bar charts: ‘geom_bar’ makes the height of the bar proportional to the number of cases in each group (or if the ‘weight’ aethetic is supplied, the sum of the weights). If you want the heights of the bars to represent values in the data, use geom_col instead. ‘geom_bar’ uses ‘stat_count’ by default: it counts the number of cases at each x position. ‘geom_col’ uses ‘stat_identity’: it leaves the data as is."
+
+## Look at the data graphics at the following link: What is a Data Scientist. Please briefly critique the designer’s choices. What works? What doesn’t work? What would you have done differently?
+
+The designer of this document to take to ensure that all of the visualizations were somewhat different. This is a great way to keep it interesting, and keep the audience engages. However, this also means that the user of this document must think about every graph in order to determine how to read it. If the designer chose more similar plots for each dataset, it may be easier to digest for the common reader. This approach, although efficient, may leave the reader bored. Seeing page after page of the same looking graph could get tedious, so I think that the designer made a good choice. One critique that I have is that some of the graphics only used percentages in the form of raw numbers. To me, in such a well designed document, seems a bit lazy, and does not truely visualize the data.
+
+
+# 3.8.1
+### 1. What is the problem with this plot? How could you improve it?
+```{r}
+ggplot(data = mpg, mapping = aes(x = cty, y = hwy)) +
+  geom_point()
+```
+#### This plot has overlapping points
+
+### 2. What parameters to geom_jitter() control the amount of jittering?
+
+```{r}
+ggplot(data = mpg, mapping = aes(x = cty, y = hwy)) +
+  geom_point() + geom_jitter(height=100, width=100)
+```
+
+#### height and width control the amount of jitter. If we set them to 100, they jitter out of control.
+
+
+# 3.9.1
+### 2. What does labs() do? Read the documentation.
+#### this function helps with the display of labels in your chart
+
+### 4. What does the plot below tell you about the relationship between city and highway mpg?
+
+```{r}
+ggplot(data = mpg, mapping = aes(x = cty, y = hwy)) +
+  geom_point() +
+  geom_abline() +
+  coord_fixed()
+```
+
+#### There is a positive relationship between hwy and cty mpgs.
+#### A fixed scale coordinate system forces a specified ratio between the physical representation of data units on the axes.
+####  abline adds a reference line to you plot
+
+# 4.4
+### 1. my_varıable is misspelled, it should be my_variable
+### 2.
+
+```{r}
+library(tidyverse)
+
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy))
+
+filter(mpg, cyl == 8)
+filter(diamonds, carat > 3)
+```
+
+# 5.2.4
+
+### 1 . Find all flights that
+
+#### Had an arrival delay of two or more hours:
+```{r}
+filter(flights, arr_delay > 120)
+```
+
+#### Flew to Houston (IAH or HOU):
+```{r}
+filter(flights, dest == "IAH" | dest == "HOU")
+```
+
+#### Were operated by United, American, or Delta
+```{r}
+filter(flights, carrier == "United" | carrier == "Delta")
+```
+
+#### Departed in summer (July, August, and September)
+```{r}
+filter(flights, month > 6 & month < 10)
+```
+
+#### Arrived more than two hours late, but didn’t leave late
+```{r}
+filter(flights, arr_delay > 160 & dep_delay < 1)
+```
+
+#### Were delayed by at least an hour, but made up over 30 minutes in flight
+```{r}
+filter(flights, dep_delay > 59 & (dep_delay - arr_delay) > 30)
+```
+
+#### Departed between midnight and 6am (inclusive)
+```{r}
+filter(flights, dep_time == 0 | dep_time < 601)
+```
+
+### 2. Another useful dplyr filtering helper is between(). What does it do? Can you use it to simplify the code needed to answer the previous challenges?
+
+#### between allows you to select data in between to numbers. We could use this instead of using the & operator in the previous filter functions
+
+### 3. How many flights have a missing dep_time? What other variables are missing? What might these rows represent?
+
+```{r}
+glimpse(filter(flights, is.na(dep_time)))
+```
+
+#### It looks like all arrival and departer time values are NA. These flights were probably canceled for one reason or another.
+
+
+### 4. Why is NA ^ 0 not missing? Why is NA | TRUE not missing? Why is FALSE & NA not missing? Can you figure out the general rule? (NA * 0 is a tricky counterexample!)
+
+#### NA ^ 0 and NA | TRUE both evaluate to TRUE
+
+# 5.4.1
+
+### 1. Brainstorm as many ways as possible to select dep_time, dep_delay, arr_time, and arr_delay from flights.
+
+```{r}
+select(flights, "dep_time", "dep_delay", "arr_time", "arr_delay")
+
+select(flights, starts_with("dep"), starts_with("arr"))
+```
+
+### What happens if you include the name of a variable multiple times in a select() call?
+```{r}
+select(flights, "dep_time", "dep_time")
+```
+#### it appears that it will return the same thing as if you were to select the variable once.
+
+### What does the one_of() function do? Why might it be helpful in conjunction with this vector?
+```{r}
+vars <- c("year", "month", "day", "dep_delay", "arr_delay")
+
+select(flights, one_of(vars))
+```
+#### you can use this to select one of the defined in the vector
+
+
+### Does the result of running the following code surprise you? How do the select helpers deal with case by default? How can you change that default?
+
+```{r}
+select(flights, contains("TIME"))
+```
+#### The contains function appears to ignore case by default, If we wanted the selector to be case sensitive, we could pass "ignore.case = TRUE"
