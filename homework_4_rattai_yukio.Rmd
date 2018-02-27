@@ -1,0 +1,217 @@
+---
+title: "COMPSCIX 415.2 Homework 3"
+author: "Yukio Rattai"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load_packages, warning=FALSE, message=FALSE}
+library(mdsr)
+library(tidyverse)
+library(nycflights13)
+```
+
+#### creating cancelled and not_cancelled variables
+```{r}
+not_cancelled <- flights %>%
+  filter(!is.na(dep_delay), !is.na(arr_delay))
+
+not_cancelled <- flights %>%
+  filter(is.na(dep_delay), is.na(arr_delay))
+```
+
+# 3.6.7
+
+### 2. Come up with another approach that will give you the same output as:
+
+#### A) We can use group_by and summarsise to acieve the same result as count:
+```{r}
+count_dest <- not_cancelled %>% count(dest)
+count_dest_2 <- not_cancelled %>% group_by(dest) %>% summarise(n = n())
+
+all.equal(count_dest, count_dest_2)
+```
+
+#### B) by using summarise with the sum function we can recreate the tibble created with count
+```{r}
+tail_dist = not_cancelled %>% count(tailnum, wt = distance)
+tail_dist_2 = not_cancelled %>% group_by(tailnum) %>% summarise(n = sum(distance))
+
+all.equal(tail_dist, tail_dist_2)
+```
+
+### 4. Look at the number of cancelled flights per day. Is there a pattern? Is the proportion of cancelled flights related to the average delay?
+
+#### It appears as if there is a correlation between average delay and number of cancelled flights. This graph suggests that the number of cancelled flights trends upwards as average delay increases.
+```{r}
+flight_dates <- flights %>%
+  group_by(year, month, day) %>%
+  summarise(
+    avg_delay = mean(arr_delay, na.rm = TRUE),
+    cancelled = sum(is.na(dep_delay), is.na(arr_delay))
+  )
+
+ggplot(data = flight_dates, mapping = aes(x = avg_delay, y = cancelled)) +
+  geom_point(alpha = 1/10) + geom_smooth(method = "lm")
+```
+
+### 5. Which carrier has the worst delays? Challenge: can you disentangle the effects of bad airports vs. bad carriers? Why/why not? (Hint: think about flights %>% group_by(carrier, dest) %>% summarise(n()))
+#
+#### It appears that the airline "F9" has the highest average delays
+```{r}
+flights %>%
+  group_by(carrier) %>%
+  summarise(
+    avg_delay = mean(arr_delay, na.rm = TRUE),
+  ) %>%
+  arrange(desc(avg_delay))
+```
+
+#### I'm not sure how we can decouple bad airport delays from bad airlines. But we can see the airports that have the worst delays:
+```{r}
+flights %>%
+  group_by(dest) %>%
+  summarise(
+    avg_delay = mean(arr_delay, na.rm = TRUE),
+    count = n()
+  ) %>%
+  arrange(desc(avg_delay))
+```
+
+### 6. What does the sort argument to count() do. When might you use it?
+#### according to the count documentation, "sort: if ‘TRUE’ will sort output in descending order of ‘n’"
+
+# 10.5
+### 1. How can you tell if an object is a tibble?
+#### One way to differentiate between tibbles and data frames is to check which class the object has. When an object is a tibble, it will have the "tbl" class name:
+```{r}
+# flights is a tibble:
+print(class(flights))
+# mt cars is not:
+print(class(mtcars))
+```
+
+### 2. Compare and contrast the following operations on a data.frame and equivalent tibble. What is different? Why might the default data frame behaviours cause you frustration?
+```{r}
+df <- data.frame(abc = 1, xyz = "a")
+tibs <- as_tibble(df)
+print(df$x)
+print(tibs$x)
+
+print(df[, "xyz"])
+print(tibs[, "xyz"])
+
+print(df[, c("abc", "xyz")])
+print(tibs[, c("abc", "xyz")])
+```
+#### One obvious difference is that the data frame will return a column with the matching letter, when using the df$column-name syntax. This could be frustrating if you were not expecting anything to be returned when not typing the whole column name. Other differences are that the tibbles return the column data types, which can be useful.
+
+
+### 3. If you have the name of a variable stored in an object, how can you extract the reference variable from a tibble?
+#### You can pass in the variable as you would a hard coded string:
+```{r}
+xyz <- "xyz"
+tibs[xyz]
+```
+
+### 6. What option controls how many additional column names are printed at the footer of a tibble?
+#### according to the print.tbl documentation, the "n_extra" argument controls the Number of extra columns to print abbreviated information for
+
+# 12.3.3
+### 2. Why does this code fail?
+
+```{r eval=FALSE}
+table4a %>%
+  gather(1999, 2000, key = "year", value = "cases")
+```
+#### This code fails because column names that are numbers must be passed as strings. Adding quotes will fix this code:
+```{r}
+table4a %>%
+  gather("1999", "2000", key = "year", value = "cases")
+```
+
+### 3. Why does spreading this tibble fail? How could you add a new column to fix the problem?
+```{r eval=FALSE}
+people <- tribble(
+  ~name,             ~key,    ~value,
+  #-----------------|--------|------
+  "Phillip Woods",   "age",       45,
+  "Phillip Woods",   "height",   186,
+  "Phillip Woods",   "age",       50,
+  "Jessica Cordero", "age",       37,
+  "Jessica Cordero", "height",   156
+)
+
+spread(people, key, value)
+```
+#### This doesn't work because there are multiple entries for age for Phillip Woods. We can add another column that distinguishes between the two:
+```{r}
+people <- tribble(
+  ~name,             ~key,    ~value, ~case_num,
+  #-----------------|--------|------|------
+  "Phillip Woods",   "age",       45, 1,
+  "Phillip Woods",   "height",   186, 1,
+  "Phillip Woods",   "age",       50, 2,
+  "Jessica Cordero", "age",       37, 1,
+  "Jessica Cordero", "height",   156, 1
+)
+
+spread(people, key, value)
+```
+
+### 4. Tidy the simple tibble below. Do you need to spread or gather it? What are the variables?
+
+#### By gathering the data, we can tidy it up again.
+```{r}
+preg <- tribble(
+  ~pregnant, ~male, ~female,
+  "yes",     NA,    10,
+  "no",      20,    12
+)
+
+print(gather(preg, sex, count, male, female))
+print(preg)
+```
+
+# 12.4.3
+### 1. What do the extra and fill arguments do in separate()? Experiment with the various options for the following two toy datasets
+
+#### extra: If ‘sep’ is a character vector, this controls what happens when there are too many pieces. There are three valid
+### options:
+* "warn" (the default): emit a warning and drop extra values.
+* "drop": drop any extra values without a warning.
+* "merge": only splits at most ‘length(into)’ times
+
+#### for example:
+```{r}
+print(tibble(x = c("a,b,c", "d,e,f,g", "h,i,j")) %>%
+  separate(x, c("one", "two", "three"), extra="warn"))
+
+print(tibble(x = c("a,b,c", "d,e,f,g", "h,i,j")) %>%
+  separate(x, c("one", "two", "three"), extra="drop"))
+
+print(tibble(x = c("a,b,c", "d,e,f,g", "h,i,j")) %>%
+  separate(x, c("one", "two", "three"), extra="merge"))
+```
+
+#### fill: If ‘sep’ is a character vector, this controls what happens when there are not enough pieces. There are three valid
+### options:
+* "warn" (the default): emit a warning and fill from the right
+* "right": fill with missing values on the right
+* "left": fill with missing values on the left
+
+```{r}
+print(tibble(x = c("a,b,c", "d,e", "f,g,i")) %>%
+  separate(x, c("one", "two", "three"), fill="warn"))
+
+print(tibble(x = c("a,b,c", "d,e", "f,g,i")) %>%
+  separate(x, c("one", "two", "three"), fill="right"))
+
+print(tibble(x = c("a,b,c", "d,e", "f,g,i")) %>%
+  separate(x, c("one", "two", "three"), fill="left"))
+```
+### 2. Both unite() and separate() have a remove argument. What does it do? Why would you set it to FALSE?
+#### the remove argument If ‘TRUE’, will remove input columns from output data frame. If you want to preserve the original data frame, when using the unite and seperate funtions, you would set this to FALSE.
