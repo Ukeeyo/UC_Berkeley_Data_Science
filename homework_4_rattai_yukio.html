@@ -469,6 +469,29 @@ print(gather(preg, sex, count, male, female))</code></pre>
 </div>
 </div>
 </div>
+<div id="baby_names.txt" class="section level1">
+<h1>baby_names.txt</h1>
+<pre class="r"><code>baby_names &lt;- read.table(&quot;baby_names.txt&quot;, sep=&quot;|&quot;, header=TRUE)
+glimpse(baby_names)</code></pre>
+<pre><code>## Observations: 30,000
+## Variables: 5
+## $ year &lt;int&gt; 1880, 1880, 1880, 1880, 1880, 1880, 1880, 1880, 1880, 188...
+## $ sex  &lt;fct&gt; F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, ...
+## $ name &lt;fct&gt; Mary, Anna, Emma, Elizabeth, Minnie, Margaret, Ida, Alice...
+## $ n    &lt;int&gt; 7065, 2604, 2003, 1939, 1746, 1578, 1472, 1414, 1320, 128...
+## $ prop &lt;dbl&gt; 0.072384329, 0.026679234, 0.020521700, 0.019865989, 0.017...</code></pre>
+<pre class="r"><code>saveRDS(baby_names, file = &quot;baby_names.rds&quot;)
+
+load_baby &lt;- readRDS(file = &quot;baby_names.rds&quot;)
+glimpse(load_baby)</code></pre>
+<pre><code>## Observations: 30,000
+## Variables: 5
+## $ year &lt;int&gt; 1880, 1880, 1880, 1880, 1880, 1880, 1880, 1880, 1880, 188...
+## $ sex  &lt;fct&gt; F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, ...
+## $ name &lt;fct&gt; Mary, Anna, Emma, Elizabeth, Minnie, Margaret, Ida, Alice...
+## $ n    &lt;int&gt; 7065, 2604, 2003, 1939, 1746, 1578, 1472, 1414, 1320, 128...
+## $ prop &lt;dbl&gt; 0.072384329, 0.026679234, 0.020521700, 0.019865989, 0.017...</code></pre>
+</div>
 
 
 

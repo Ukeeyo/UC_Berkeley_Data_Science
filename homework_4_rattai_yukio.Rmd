@@ -215,3 +215,14 @@ print(tibble(x = c("a,b,c", "d,e", "f,g,i")) %>%
 ```
 ### 2. Both unite() and separate() have a remove argument. What does it do? Why would you set it to FALSE?
 #### the remove argument If ‘TRUE’, will remove input columns from output data frame. If you want to preserve the original data frame, when using the unite and seperate funtions, you would set this to FALSE.
+
+# baby_names.txt
+```{r}
+baby_names <- read.table("baby_names.txt", sep="|", header=TRUE)
+glimpse(baby_names)
+
+saveRDS(baby_names, file = "baby_names.rds")
+
+load_baby <- readRDS(file = "baby_names.rds")
+glimpse(load_baby)
+```
