@@ -1,0 +1,148 @@
+---
+title: "COMPSCIX 415.2 Homework 7"
+author: "Yukio Rattai"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load_packages, warning=FALSE, message=FALSE}
+library(mdsr)
+library(tidyverse)
+library(broom)
+```
+<br>
+
+# Exercise 1
+```{r}
+train <- read.csv("data/train.csv", header=TRUE)
+paste("Number of columns: ", ncol(train), " Number of observations: ", nrow(train))
+```
+### 
+<br>
+
+# Exercise 2
+```{r}
+# When taking a random sample, it is often useful to set a seed so that
+# your work is reproducible. Setting a seed will guarantee that the same
+# random sample will be generated every time, so long as you always set the
+# same seed beforehand
+set.seed(29283)
+
+# This data already has an Id column which we can make use of.
+# Let's create our training set using sample_frac. Fill in the blank.
+train_set <- train %>% sample_frac(0.7)
+
+# let's create our testing set using the Id column. Fill in the blanks.
+test_set <- train %>% filter(!(Id %in% train_set$Id))
+
+# test to verify that all data rows are contained in our test / train split
+(nrow(test_set) + nrow(train_set)) == nrow(train)
+
+```
+<br>
+
+# Exercise 3
+```{r}
+# Fit a model with intercept only
+mod_0 <- lm(SalePrice ~ 1, data = train_set)
+
+# Double-check that the average SalePrice is equal to our model's coefficient
+mean(train_set$SalePrice)
+tidy(mod_0)
+
+# Check the R-squared
+glance(mod_0)
+```
+<br>
+
+# Exercise 4
+* GrLivArea: Above grade (ground) living area square feet
+* OverallQual: Rates the overall material and finish of the house
+* Neighborhood: Physical locations within Ames city limits
+```{r}
+mod_1 <- lm(SalePrice ~ GrLivArea + OverallQual + Neighborhood, data=train)
+
+tidy(mod_1)
+glance(mod_1)
+
+```
+
+### How would you interpret the coefficients on GrLivArea and OverallQual?
+#### Increase in the OverallQual and GrLivArea will result in a higher SalePrice. OverallQual specifically is a good indicator of how high the sales price will be
+
+### How would you interpret the coefficient on NeighborhoodBrkSide?
+#### NeighborhoodBrkSide has a significant negative relationship with SalePrice
+
+### Are the features significant?
+#### Both GrLivArea and OverallQual have relatively low p values. This would suggest they are significant. Some neighborhoods are more significant indicators of SalePrice than others. For example, NeighborhoodBrkSide has a relatively high p-val, so I would say that it is not significant.
+
+### Are the features practically significant?
+#### I would argue that Neighborhood and GrLivArea could be practically significant, but although OverallQual is statistically significant, it is an arbitrary rating. Since Overall quality can be subjective, this data may not be practical.
+
+### Is the model a good fit (to the training set)?
+#### With an r-squared score of 0.7868484, I would say that this model is not a great fit.
+
+<br>
+
+# Exercise 5
+```{r}
+test_predictions <- predict(mod_1, newdata = test_set)
+rmse <- sqrt(mean((test_predictions - test_set$SalePrice)^2))
+rmse
+
+```
+<br>
+
+# Exercise 7
+```{r}
+ggplotRegression <- function (fit) {
+
+require(ggplot2)
+
+ggplot(fit$model, aes_string(x = names(fit$model)[2], y = names(fit$model)[1])) + 
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  labs(title = paste("Adj R2 = ",signif(summary(fit)$adj.r.squared, 5),
+                     "Intercept =",signif(fit$coef[[1]],5 ),
+                     " Slope =",signif(fit$coef[[2]], 5),
+                     " P =",signif(summary(fit)$coef[2,4], 5)))
+}
+
+
+
+sim1a <- tibble(
+  x = rep(1:10, each = 3),
+  y = x * 1.5 + 6 + rt(length(x), df = 2)
+)
+mod_2 <- lm(y ~ x, data=sim1a)
+
+ggplotRegression(mod_2)
+
+sim1a <- tibble(
+  x = rep(1:10, each = 3),
+  y = x * 1.5 + 6 + rt(length(x), df = 2)
+)
+mod_2 <- lm(y ~ x, data=sim1a)
+
+ggplotRegression(mod_2)
+
+sim1a <- tibble(
+  x = rep(1:10, each = 3),
+  y = x * 1.5 + 6 + rt(length(x), df = 2)
+)
+mod_2 <- lm(y ~ x, data=sim1a)
+
+ggplotRegression(mod_2)
+
+sim1a <- tibble(
+  x = rep(1:10, each = 3),
+  y = x * 1.5 + 6 + rt(length(x), df = 2)
+)
+mod_2 <- lm(y ~ x, data=sim1a)
+
+ggplotRegression(mod_2)
+
+```
