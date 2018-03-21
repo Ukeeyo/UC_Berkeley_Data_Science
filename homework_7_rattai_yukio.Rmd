@@ -146,3 +146,5 @@ mod_2 <- lm(y ~ x, data=sim1a)
 ggplotRegression(mod_2)
 
 ```
+
+### By copying the function provided at: https://sejohnston.com/2012/08/09/a-quick-and-easy-function-to-plot-lm-results-in-r/ I was able to plot the regression line of the fit model. As we can see, the models will try it's best to reduce the residuals. But since it can only fit linearly, some values will fall well outside of the regression line.
