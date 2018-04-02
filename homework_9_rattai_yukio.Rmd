@@ -1,0 +1,171 @@
+---
+title: "COMPSCIX 415.2 Homework 9/Final"
+author: "Yukio Rattai"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load_packages, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(modelr)
+library(rpart)
+library(partykit)
+library(randomForest)
+library(plotly)
+set.seed(987)
+```
+<br>
+
+# Bootstrapping
+
+## 1.
+```{r}
+train <- read.csv("data/train_final.csv", header=TRUE)
+
+train$Survived <- as.factor(train_load$Survived)
+
+glimpse(train)
+```
+<br>
+
+## 2.
+```{r}
+titanic_boot <- bootstrap(data = train, n = 100)
+titanic_boot
+```
+<br>
+
+## 3.
+```{r}
+# since the strap column of titanic_boot is a list, we can
+# extract the resampled data using the double brackets [[]],
+# and just pick out a few of them to compare the number of
+# distinct rows
+as.tibble(titanic_boot$strap[[1]]) %>% n_distinct()
+as.tibble(titanic_boot$strap[[2]]) %>% n_distinct()
+as.tibble(titanic_boot$strap[[3]]) %>% n_distinct()
+```
+<br>
+
+## 4.
+```{r}
+age_mean <- function(input) {
+  data <- as.tibble(input) # convert input data set to a tibble
+  mean_age <- mean(data$Age, na.rm = TRUE) # take the mean of Age, remove NAs
+  return(mean_age) # return the mean value of Age from data
+}
+
+
+# loop through the 100 bootstrap samples and use the age_mean()
+# function
+all_means <- rep(NA, 100)
+
+# start the loop
+for(i in 1:100) {
+  all_means[i] <- age_mean(titanic_boot$strap[[i]])
+}
+
+# take a look at some of the means you calculated from your samples
+head(all_means)
+
+# convert to a tibble so we can use if for plotting
+all_means <- tibble(all_means = all_means)
+glimpse(all_means)
+```
+<br>
+
+## 5.
+```{r message = FALSE}
+all_means %>% ggplot(aes(x = all_means)) + geom_histogram()
+```
+<br>
+
+## 6.
+```{r}
+print( paste("standard error is: ", sd(all_means$all_means)/sqrt(length(all_means$all_means))) )
+```
+
+# Random Forrest
+## 1.
+```{r}
+set.seed(987)
+
+model_data <- resample_partition(train, c(test = 0.3, train = 0.7))
+train_set <- as.tibble(model_data$test)
+test_set <- as.tibble(model_data$train)
+```
+<br>
+
+## 2.
+```{r}
+tree_mod <- rpart(Survived ~ Pclass + Sex + Age + SibSp + Parch + Fare + Embarked, data = train_set)
+
+plot(as.party(tree_mod), gp = gpar(fontsize = 8))
+```
+#### since this tree has more features, it seems like there are more possible nodes. Also, the female branch of the tree is very similar to one fitted with less variables. The male side relies on the SibSP to determine whether many male passengers survived, this feature was not used in the previous decision tree.
+<br>
+
+## 3.
+```{r}
+rf_mod <- randomForest(Survived ~ Pclass + Sex + Age + SibSp + Parch + Fare + Embarked,
+                         data = train_set,
+                         ntrees = 500,
+                         mtry = 4,
+                         na.action = na.roughfix)
+```
+<br>
+
+## 4.
+```{r}
+rf_preds <- predict(rf_mod, newdata = test_set, type = 'prob')[,2]
+tree_preds <- predict(tree_mod, newdata = test_set)[,2]
+
+pred_rf <- prediction(predictions = rf_preds, labels = test_set$Survived)
+pred_tree <- prediction(predictions = tree_preds, labels = test_set$Survived)
+
+# calculate the AUC
+auc_rf <- performance(pred_rf, measure = 'auc')
+auc_tree <- performance(pred_tree, measure = 'auc')
+
+# extract the AUC value
+auc_rf@y.values[[1]]
+auc_tree@y.values[[1]]
+```
+### By comparing our AUC values, we can see that our random forrest classifier performs slightly better than the normal decision tree classifier.
+<br>
+
+## 5.
+```{r}
+perf_tree <- performance(pred_tree, measure = 'tpr', x.measure = 'fpr')
+perf_tree_tbl <- tibble(perf_tree@x.values[[1]], perf_tree@y.values[[1]])
+
+perf_rf <- performance(pred_rf, measure = 'tpr', x.measure = 'fpr')
+perf_rf_tbl <- tibble(perf_rf@x.values[[1]], perf_rf@y.values[[1]])
+
+# Change the names of the columns of the tibble
+names(perf_tree_tbl) <- c('fpr', 'tpr')
+names(perf_rf_tbl) <- c('fpr', 'tpr')
+
+plot_roc_2 <- function(perf_tbl, perf_tbl_2) {
+  p <- ggplot(data = perf_tbl, aes(x = fpr, y = tpr)) +
+    geom_line(aes(color = 'tree')) +
+    geom_line(aes(color = 'random forrest'), data = perf_tbl_2) +
+    geom_abline(intercept = 0, slope = 1, lty = 3) +
+    labs(x = 'False positive rate', y = 'True positive rate') +
+    theme_bw()
+
+  return(ggplotly(p))
+}
+
+plot_roc_2(perf_tree_tbl, perf_rf_tbl)
+```
+<br>
+
+# 6
+### By exploring the interactive plotly plot of ROC lines, we can see that the random forrest performs slightly better than the decision tree at almost all levels of false positive vs true positive.
+
+### Random Forrest false positive at 0.75 true positive: ~0.16
+### Decision Tree false positive at 0.75 true positive: ~0.22
